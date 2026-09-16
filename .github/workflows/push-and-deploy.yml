@@ -1,0 +1,510 @@
+name: 🚀 Second Brain — Push, Recover & Deploy
+
+on:
+  push:
+    branches: ["main", "develop", "feature/**", "hotfix/**"]
+  pull_request:
+    branches: ["main"]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Branch to push (leave blank for current)"
+        required: false
+        default: "main"
+      force_push:
+        description: "Force push if remote has diverged?"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      max_retries:
+        description: "Max push retry attempts"
+        required: false
+        default: "3"
+      deploy_after_push:
+        description: "Deploy to Railway after successful push?"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+# ── Concurrency: cancel in-flight runs on same branch ────────
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_ORG: ethinxsolutionsau-prog
+  GITHUB_REPO: main-rain
+  DEFAULT_BRANCH: main
+  NODE_VERSION: "20"
+
+jobs:
+  # ════════════════════════════════════════════════════════════
+  #  JOB 1 — Validate & Prepare
+  # ════════════════════════════════════════════════════════════
+  validate:
+    name: 🔍 Validate & Prepare
+    runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.branch.outputs.name }}
+      commit_sha:  ${{ steps.branch.outputs.sha }}
+      should_deploy: ${{ steps.branch.outputs.should_deploy }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for rollback tagging
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Resolve branch name and metadata
+        id: branch
+        run: |
+          BRANCH="${{ github.event.inputs.target_branch || github.ref_name }}"
+          SHA=$(git rev-parse HEAD)
+          echo "name=$BRANCH"   >> $GITHUB_OUTPUT
+          echo "sha=$SHA"       >> $GITHUB_OUTPUT
+          # Only auto-deploy from main
+          if [[ "$BRANCH" == "main" && "${{ github.event.inputs.deploy_after_push }}" != "false" ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+          echo "### 📋 Run Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "| Key | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`$BRANCH\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`$SHA\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Event | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Validate project structure
+        run: |
+          echo "Checking required project files..."
+          MISSING=()
+          for F in package.json server.js client/package.json; do
+            if [ ! -f "$F" ]; then
+              MISSING+=("$F")
+              echo "::warning file=$F::Expected project file not found: $F"
+            else
+              echo "✓ $F"
+            fi
+          done
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "::warning::Missing files: ${MISSING[*]} — push will continue but verify project integrity"
+          fi
+
+      - name: Validate PAT secret is set
+        run: |
+          if [ -z "${{ secrets.GH_PAT }}" ]; then
+            echo "::error::GH_PAT secret is not set. Add it at Settings → Secrets → Actions."
+            exit 1
+          fi
+          echo "✓ GH_PAT secret is present"
+
+  # ════════════════════════════════════════════════════════════
+  #  JOB 2 — Rollback Tag
+  # ════════════════════════════════════════════════════════════
+  rollback-tag:
+    name: 🏷️ Create Rollback Tag
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Create pre-push rollback tag
+        id: tag
+        run: |
+          TAG="pre-push-backup-$(date +%Y%m%d-%H%M%S)-${{ needs.validate.outputs.commit_sha }}"
+          TAG="${TAG:0:60}"   # GitHub tag name limit
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG" -m "Rollback point before push on $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          git push origin "$TAG"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          echo "✓ Rollback tag created: $TAG"
+          echo "### 🏷️ Rollback Tag" >> $GITHUB_STEP_SUMMARY
+          echo "Tag \`$TAG\` created. To roll back:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "git fetch --tags" >> $GITHUB_STEP_SUMMARY
+          echo "git checkout $TAG" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════
+  #  JOB 3 — Push with Retry & Error Recovery
+  # ════════════════════════════════════════════════════════════
+  push-branches:
+    name: 📤 Push Branches
+    runs-on: ubuntu-latest
+    needs: [validate, rollback-tag]
+    outputs:
+      push_status:    ${{ steps.push.outputs.status }}
+      pushed_count:   ${{ steps.push.outputs.pushed_count }}
+      failed_count:   ${{ steps.push.outputs.failed_count }}
+      skipped_count:  ${{ steps.push.outputs.skipped_count }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up authenticated remote
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          # Use PAT in URL — masked in logs by GitHub Actions automatically
+          git remote set-url origin \
+            "https://x-access-token:${GH_PAT}@github.com/${{ env.GITHUB_ORG }}/${{ env.GITHUB_REPO }}.git"
+          echo "✓ Authenticated remote configured"
+
+      - name: Push branches with retry and error recovery
+        id: push
+        env:
+          MAX_RETRIES: ${{ github.event.inputs.max_retries || '3' }}
+          FORCE_PUSH:  ${{ github.event.inputs.force_push  || 'false' }}
+          TARGET_BRANCH: ${{ needs.validate.outputs.branch_name }}
+        run: |
+          # ── Initialise log and counters ──────────────────────
+          LOG_FILE="push-log-$(date +%Y%m%d-%H%M%S).txt"
+          PUSHED=(); FAILED=(); SKIPPED=()
+
+          log() { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$LOG_FILE"; }
+          log "=== Push job started ==="
+          log "Target branch : $TARGET_BRANCH"
+          log "Max retries   : $MAX_RETRIES"
+          log "Force push    : $FORCE_PUSH"
+
+          # ── Push a single branch with retry ─────────────────
+          push_branch() {
+            local BRANCH="$1"
+            local ATTEMPT=0
+            local FLAGS="-u"
+            [ "$FORCE_PUSH" = "true" ] && FLAGS="-u --force"
+
+            log "--- Pushing branch: $BRANCH ---"
+
+            while [ $ATTEMPT -lt $MAX_RETRIES ]; do
+              ATTEMPT=$((ATTEMPT + 1))
+              log "Attempt $ATTEMPT/$MAX_RETRIES for '$BRANCH'"
+
+              PUSH_OUT=$(git push $FLAGS origin "$BRANCH" 2>&1) && PUSH_RC=0 || PUSH_RC=$?
+
+              if [ $PUSH_RC -eq 0 ]; then
+                log "SUCCESS: '$BRANCH' pushed on attempt $ATTEMPT"
+                PUSHED+=("$BRANCH")
+                return 0
+              fi
+
+              log "FAILED attempt $ATTEMPT: $PUSH_OUT"
+
+              # Classify error
+              if echo "$PUSH_OUT" | grep -q "Everything up-to-date"; then
+                log "SKIPPED: '$BRANCH' already up to date"
+                SKIPPED+=("$BRANCH (already up-to-date)")
+                return 0
+
+              elif echo "$PUSH_OUT" | grep -q "rejected.*non-fast-forward\|fetch first"; then
+                log "DIVERGED: '$BRANCH' — remote has extra commits"
+                if [ "$FORCE_PUSH" = "true" ]; then
+                  log "Force push enabled — retrying with --force"
+                  git push --force origin "$BRANCH" 2>&1 | tee -a "$LOG_FILE" && {
+                    log "FORCE SUCCESS: '$BRANCH'"
+                    PUSHED+=("$BRANCH (force)")
+                    return 0
+                  } || {
+                    log "FORCE FAILED: '$BRANCH'"
+                    FAILED+=("$BRANCH (diverged, force failed)")
+                    return 1
+                  }
+                else
+                  log "SKIPPED: '$BRANCH' diverged and force_push=false"
+                  SKIPPED+=("$BRANCH (diverged — set force_push=true to override)")
+                  echo "::warning::Branch '$BRANCH' diverged from remote. Re-run with force_push=true to override."
+                  return 0
+                fi
+
+              elif echo "$PUSH_OUT" | grep -q "Authentication\|401\|403"; then
+                log "AUTH ERROR: '$BRANCH' — aborting (no retry)"
+                FAILED+=("$BRANCH (auth error)")
+                echo "::error::Authentication failed for '$BRANCH'. Check GH_PAT secret."
+                return 1
+
+              elif echo "$PUSH_OUT" | grep -q "timeout\|Could not resolve\|network\|Connection"; then
+                log "NETWORK ERROR on attempt $ATTEMPT — waiting 10s before retry"
+                echo "::warning::Network error on attempt $ATTEMPT for '$BRANCH' — retrying..."
+                sleep 10
+                continue
+
+              else
+                log "UNKNOWN ERROR on attempt $ATTEMPT — waiting 5s before retry"
+                sleep 5
+                continue
+              fi
+            done
+
+            # All retries exhausted
+            log "EXHAUSTED: All $MAX_RETRIES attempts failed for '$BRANCH'"
+            FAILED+=("$BRANCH (all retries exhausted)")
+            echo "::error::All $MAX_RETRIES push attempts failed for branch '$BRANCH'"
+            return 1
+          }
+
+          # ── Collect all local branches ───────────────────────
+          ALL_BRANCHES=$(git branch --format='%(refname:short)')
+          BRANCH_COUNT=$(echo "$ALL_BRANCHES" | wc -l | tr -d ' ')
+          log "Found $BRANCH_COUNT local branch(es): $(echo "$ALL_BRANCHES" | tr '\n' ' ')"
+
+          # Push target/main branch first
+          push_branch "$TARGET_BRANCH" || true
+
+          # Push remaining branches
+          while IFS= read -r B; do
+            [ "$B" = "$TARGET_BRANCH" ] && continue
+            [ -z "$B" ] && continue
+            push_branch "$B" || true
+          done <<< "$ALL_BRANCHES"
+
+          # ── Write outputs ────────────────────────────────────
+          echo "pushed_count=${#PUSHED[@]}"   >> $GITHUB_OUTPUT
+          echo "failed_count=${#FAILED[@]}"   >> $GITHUB_OUTPUT
+          echo "skipped_count=${#SKIPPED[@]}" >> $GITHUB_OUTPUT
+
+          if [ ${#FAILED[@]} -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            log "=== All pushes completed successfully ==="
+          else
+            echo "status=partial" >> $GITHUB_OUTPUT
+            log "=== Push completed with ${#FAILED[@]} failure(s) ==="
+          fi
+
+          # ── Write branch results JSON for artifact ───────────
+          cat > branch-results.json << EOF
+          {
+            "run_id": "${{ github.run_id }}",
+            "run_number": "${{ github.run_number }}",
+            "timestamp": "$(date -u '+%Y-%m-%dT%H:%M:%SZ')",
+            "branch": "$TARGET_BRANCH",
+            "commit": "${{ needs.validate.outputs.commit_sha }}",
+            "rollback_tag": "${{ needs.rollback-tag.outputs.tag_name }}",
+            "pushed":  $(printf '%s\n' "${PUSHED[@]+"${PUSHED[@]}"}"  | jq -R . | jq -s . 2>/dev/null || echo '[]'),
+            "failed":  $(printf '%s\n' "${FAILED[@]+"${FAILED[@]}"}"  | jq -R . | jq -s . 2>/dev/null || echo '[]'),
+            "skipped": $(printf '%s\n' "${SKIPPED[@]+"${SKIPPED[@]}"}" | jq -R . | jq -s . 2>/dev/null || echo '[]')
+          }
+          EOF
+
+          # ── GitHub Step Summary ──────────────────────────────
+          echo "### 📤 Branch Push Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          for b in "${PUSHED[@]+"${PUSHED[@]}"}";  do echo "| \`$b\` | ✅ Pushed |"  >> $GITHUB_STEP_SUMMARY; done
+          for b in "${SKIPPED[@]+"${SKIPPED[@]}"}"; do echo "| \`$b\` | ⏭️ Skipped |" >> $GITHUB_STEP_SUMMARY; done
+          for b in "${FAILED[@]+"${FAILED[@]}"}";  do echo "| \`$b\` | ❌ Failed |"  >> $GITHUB_STEP_SUMMARY; done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Rollback tag:** \`${{ needs.rollback-tag.outputs.tag_name }}\`" >> $GITHUB_STEP_SUMMARY
+
+          # Save log filename for artifact upload
+          echo "$LOG_FILE" > log_filename.txt
+
+      - name: Sanitise remote URL (remove PAT)
+        if: always()
+        run: |
+          git remote set-url origin \
+            "https://github.com/${{ env.GITHUB_ORG }}/${{ env.GITHUB_REPO }}.git"
+          echo "✓ Remote URL sanitised"
+
+      - name: Upload push log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: push-log-${{ github.run_number }}
+          path: |
+            push-log-*.txt
+            branch-results.json
+          retention-days: 30
+
+      - name: Fail job if any branches failed
+        if: steps.push.outputs.failed_count != '0'
+        run: |
+          echo "::error::${{ steps.push.outputs.failed_count }} branch(es) failed to push."
+          echo "Download the 'push-log-${{ github.run_number }}' artifact for details."
+          exit 1
+
+  # ════════════════════════════════════════════════════════════
+  #  JOB 4 — Deploy to Railway (main branch only)
+  # ════════════════════════════════════════════════════════════
+  deploy:
+    name: 🚂 Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [validate, push-branches]
+    if: |
+      needs.push-branches.outputs.push_status == 'success' &&
+      needs.validate.outputs.should_deploy == 'true'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.deploy_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy to Railway
+        id: deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::warning::RAILWAY_TOKEN not set — skipping Railway deployment"
+            echo "deploy_url=https://github.com/${{ env.GITHUB_ORG }}/${{ env.GITHUB_REPO }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Deploying to Railway..."
+          railway up --detach 2>&1 | tee railway-deploy.log || {
+            echo "::error::Railway deployment failed"
+            cat railway-deploy.log
+            exit 1
+          }
+
+          DEPLOY_URL=$(railway status --json 2>/dev/null | jq -r '.deploymentUrl // empty' || echo "")
+          if [ -n "$DEPLOY_URL" ]; then
+            echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+            echo "✓ Deployed to: $DEPLOY_URL"
+          else
+            echo "deploy_url=https://railway.app" >> $GITHUB_OUTPUT
+          fi
+
+          echo "### 🚂 Railway Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          [ -n "$DEPLOY_URL" ] && echo "URL: $DEPLOY_URL" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Railway deploy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: railway-deploy-log-${{ github.run_number }}
+          path: railway-deploy.log
+          retention-days: 14
+
+  # ════════════════════════════════════════════════════════════
+  #  JOB 5 — Notify (success or failure)
+  # ════════════════════════════════════════════════════════════
+  notify:
+    name: 📣 Notify Results
+    runs-on: ubuntu-latest
+    needs: [validate, rollback-tag, push-branches, deploy]
+    if: always()
+
+    steps:
+      - name: Download push log artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: push-log-${{ github.run_number }}
+          path: ./artifacts
+        continue-on-error: true
+
+      - name: Build final status report
+        id: report
+        run: |
+          PUSH_STATUS="${{ needs.push-branches.outputs.push_status }}"
+          PUSHED="${{ needs.push-branches.outputs.pushed_count }}"
+          FAILED="${{ needs.push-branches.outputs.failed_count }}"
+          SKIPPED="${{ needs.push-branches.outputs.skipped_count }}"
+          DEPLOY_STATUS="${{ needs.deploy.result }}"
+          ROLLBACK_TAG="${{ needs.rollback-tag.outputs.tag_name }}"
+          BRANCH="${{ needs.validate.outputs.branch_name }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$PUSH_STATUS" = "success" ]; then
+            OVERALL="✅ SUCCESS"
+            COLOUR="good"
+          elif [ "$FAILED" -gt 0 ]; then
+            OVERALL="⚠️ PARTIAL FAILURE"
+            COLOUR="warning"
+          else
+            OVERALL="❌ FAILED"
+            COLOUR="danger"
+          fi
+
+          echo "overall=$OVERALL"         >> $GITHUB_OUTPUT
+          echo "colour=$COLOUR"           >> $GITHUB_OUTPUT
+          echo "run_url=$RUN_URL"         >> $GITHUB_OUTPUT
+          echo "rollback_tag=$ROLLBACK_TAG" >> $GITHUB_OUTPUT
+
+          # Final GitHub Step Summary
+          echo "## 🏁 Final Pipeline Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Overall Status | $OVERALL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`$BRANCH\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pushed | $PUSHED branch(es) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Failed | $FAILED branch(es) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Skipped | $SKIPPED branch(es) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy | $DEPLOY_STATUS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rollback Tag | \`$ROLLBACK_TAG\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Run URL | [View Run]($RUN_URL) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$FAILED" -gt 0 ]; then
+            echo "### ⚠️ Recovery Instructions" >> $GITHUB_STEP_SUMMARY
+            echo "To roll back to pre-push state:" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo "git fetch --tags" >> $GITHUB_STEP_SUMMARY
+            echo "git checkout $ROLLBACK_TAG" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Post Slack notification (if configured)
+        if: env.SLACK_WEBHOOK != ''
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        run: |
+          curl -s -X POST "$SLACK_WEBHOOK" \
+            -H 'Content-type: application/json' \
+            --data '{
+              "attachments": [{
+                "color": "${{ steps.report.outputs.colour }}",
+                "title": "Second Brain Push — ${{ steps.report.outputs.overall }}",
+                "fields": [
+                  {"title": "Branch",   "value": "`${{ needs.validate.outputs.branch_name }}`", "short": true},
+                  {"title": "Pushed",   "value": "${{ needs.push-branches.outputs.pushed_count }} branch(es)", "short": true},
+                  {"title": "Failed",   "value": "${{ needs.push-branches.outputs.failed_count }} branch(es)", "short": true},
+                  {"title": "Deploy",   "value": "${{ needs.deploy.result }}", "short": true},
+                  {"title": "Rollback", "value": "`${{ steps.report.outputs.rollback_tag }}`", "short": false},
+                  {"title": "Run",      "value": "<${{ steps.report.outputs.run_url }}|View Pipeline>", "short": false}
+                ],
+                "footer": "github-actions • ${{ github.repository }}"
+              }]
+            }' && echo "✓ Slack notification sent" || echo "::warning::Slack notification failed"
+
+      - name: Upload final consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-report-${{ github.run_number }}
+          path: ./artifacts/
+          retention-days: 30

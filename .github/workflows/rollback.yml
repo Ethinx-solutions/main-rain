@@ -1,0 +1,73 @@
+name: 🔄 Rollback to Pre-Push Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_tag:
+        description: "Rollback tag to restore (e.g. pre-push-backup-20260827-034100-abc1234)"
+        required: true
+      target_branch:
+        description: "Branch to roll back"
+        required: false
+        default: "main"
+      confirm:
+        description: "Type CONFIRM to proceed (safety check)"
+        required: true
+
+jobs:
+  rollback:
+    name: 🔄 Execute Rollback
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Safety confirmation check
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "CONFIRM" ]; then
+            echo "::error::You must type CONFIRM in the confirm field to proceed."
+            exit 1
+          fi
+          echo "✓ Safety confirmation passed"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Validate rollback tag exists
+        run: |
+          TAG="${{ github.event.inputs.rollback_tag }}"
+          if ! git tag -l | grep -q "^${TAG}$"; then
+            echo "::error::Tag '$TAG' not found. Available pre-push tags:"
+            git tag -l "pre-push-backup-*" | tail -20
+            exit 1
+          fi
+          echo "✓ Tag '$TAG' found"
+          git show "$TAG" --stat | head -20
+
+      - name: Execute rollback
+        run: |
+          TAG="${{ github.event.inputs.rollback_tag }}"
+          BRANCH="${{ github.event.inputs.target_branch }}"
+
+          echo "Rolling back '$BRANCH' to tag '$TAG'..."
+          git checkout "$TAG"
+          git checkout -B "$BRANCH"
+          git push --force origin "$BRANCH"
+
+          echo "✓ Rollback complete"
+          echo "### ✅ Rollback Complete" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`$BRANCH\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Restored to | \`$TAG\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Executed by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY

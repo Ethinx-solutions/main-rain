@@ -1,0 +1,99 @@
+{
+  "workflow_name": "second-brain-with-agents",
+  "workflow_display_name": "Second Brain Dashboard with Agent System",
+  "description": "Build a complete second brain application with notes, tasks, links, daily views, authentication, and a comprehensive agent management system",
+  "version": "1.0.0",
+  "created_date": "2026-04-12",
+  "parameters": [
+    {
+      "name": "dashboard_url",
+      "display_name": "Dashboard URL",
+      "description": "The reference dashboard URL to clone",
+      "type": "string",
+      "required": true,
+      "default": "brain.housefull.dev"
+    },
+    {
+      "name": "deployment_platform",
+      "display_name": "Deployment Platform",
+      "description": "Platform to deploy the application to",
+      "type": "string",
+      "required": false,
+      "default": "Vercel"
+    },
+    {
+      "name": "agent_count",
+      "display_name": "Number of Agents",
+      "description": "Total number of ETHINX agents to implement",
+      "type": "integer",
+      "required": false,
+      "default": 10
+    },
+    {
+      "name": "external_services",
+      "display_name": "External Services",
+      "description": "External services for agent integration",
+      "type": "string",
+      "required": false,
+      "default": "Stripe, Supabase, Deployment, Audit"
+    }
+  ],
+  "steps": [
+    {
+      "step_number": 1,
+      "step_name": "clone_dashboard",
+      "display_name": "Clone Dashboard Foundation",
+      "description": "Build the core second brain app with notes, tasks, links, daily views, and authentication",
+      "parameters_used": ["dashboard_url", "deployment_platform"]
+    },
+    {
+      "step_number": 2,
+      "step_name": "extend_features",
+      "display_name": "Extend with AI Features",
+      "description": "Add AI-powered note summarization, advanced search, and productivity tool integrations",
+      "parameters_used": []
+    },
+    {
+      "step_number": 3,
+      "step_name": "add_agents",
+      "display_name": "Add ETHINX Agents",
+      "description": "Implement the ETHINX agent system with external data access management",
+      "parameters_used": ["agent_count"]
+    },
+    {
+      "step_number": 4,
+      "step_name": "create_registry",
+      "display_name": "Create Agent Registry",
+      "description": "Build agent registry with permissions, status tracking, and failure monitoring",
+      "parameters_used": []
+    },
+    {
+      "step_number": 5,
+      "step_name": "build_control_ui",
+      "display_name": "Build Agent Control UI",
+      "description": "Create comprehensive agent management interface with toggles, permissions, and activity logs",
+      "parameters_used": []
+    },
+    {
+      "step_number": 6,
+      "step_name": "implement_external_agents",
+      "display_name": "Implement External Agents",
+      "description": "Set up external agents for Stripe, Supabase, Deployment, and Audit operations",
+      "parameters_used": ["external_services"]
+    },
+    {
+      "step_number": 7,
+      "step_name": "add_internal_agents",
+      "display_name": "Add Internal Agents",
+      "description": "Implement internal agents for Strategy, Content, and Copy generation",
+      "parameters_used": []
+    },
+    {
+      "step_number": 8,
+      "step_name": "create_management_interface",
+      "display_name": "Create Management Interface",
+      "description": "Build secure agent management interface showing only external-access agents",
+      "parameters_used": []
+    }
+  ]
+}
