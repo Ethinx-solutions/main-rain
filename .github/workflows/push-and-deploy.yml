@@ -35,7 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GITHUB_ORG: ethinxsolutionsau-prog
+  GITHUB_ORG: Ethinx-solutions
   GITHUB_REPO: main-rain
   DEFAULT_BRANCH: main
   NODE_VERSION: "20"
