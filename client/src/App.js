@@ -12,6 +12,9 @@ import DailyView from './pages/DailyView';
 import Agents from './pages/Agents';
 import Settings from './pages/Settings';
 import Assistant from './pages/Assistant';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
@@ -37,6 +40,11 @@ function App() {
           path="/register" 
           element={!user ? <Register /> : <Navigate to="/dashboard" replace />} 
         />
+        {/* Email-link routes: unconditional so a verification/reset link works
+            even when another account is signed in on this browser. */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Protected routes */}
         <Route 
