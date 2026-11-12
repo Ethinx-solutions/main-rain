@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { 
   Plus, 
   Search, 
-  Filter, 
-  Edit3, 
+    Edit3, 
   Trash2, 
   ExternalLink,
   Star,

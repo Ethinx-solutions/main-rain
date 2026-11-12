@@ -46,10 +46,24 @@ A comprehensive personal knowledge management system built with React, Node.js, 
 - Intuitive navigation
 
 ### 🔐 Authentication & Security
-- Email-based authentication
+- Email-based authentication with mandatory email verification
+- Real verification emails via Resend (authorised API key) or SMTP
+- No auto-verification fallback: accounts stay unverified until the emailed
+  link is confirmed; login, documents and AI are gated until then
 - JWT token security
-- Password reset functionality
+- Password reset with hashed, single-use, expiring tokens
 - Secure data storage
+
+### 🤖 AI Second Brain (RAG)
+- Upload documents (.txt .md .markdown .csv .json .log .pdf .docx)
+- Text extraction, chunking with overlap, and metadata
+- Embeddings via local Ollama (`nomic-embed-text`) or OpenAI (metered, optional)
+- Persistent per-tenant vector storage in MongoDB
+- Semantic retrieval and grounded question answering with source citations
+- Tenant-isolated by construction: users can only query their own documents
+- Cost controls: upload-size cap, per-user document quota, chunk cap,
+  request timeouts and bounded retries
+- Frontend page: **AI Assistant** (upload, track indexing, ask, view sources)
 
 ## 🚀 Quick Start
 
@@ -89,20 +103,36 @@ nano .env
 # Database
 MONGODB_URI=mongodb://localhost:27017/secondbrain
 
-# JWT Secret (generate a strong random string)
-JWT_SECRET=your-super-secret-jwt-key-here
+# JWT Secret (generate with: openssl rand -hex 32) - REQUIRED in production
+JWT_SECRET=
 
-# Email Configuration
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+# Email verification - pick ONE provider
+# Resend (authorised API key):
+RESEND_API_KEY=
+MAIL_FROM=Second Brain <you@your-verified-domain>
+# Or classic SMTP:
+# MAIL_PROVIDER=smtp
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USER=your-email@gmail.com
+# EMAIL_PASS=your-app-password
+# Or MAIL_PROVIDER=none (delivery disabled; accounts stay unverified - no auto-verify)
 
 # URLs
 CLIENT_URL=http://localhost:3000
 PORT=5000
 NODE_ENV=development
+
+# AI Second Brain (Ollama is local + free; it must have nomic-embed-text
+# and the LLM model pulled: docker exec ethinx-ollama ollama pull nomic-embed-text)
+EMBED_PROVIDER=ollama
+OLLAMA_URL=http://127.0.0.1:11434
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen2.5:3b-instruct
 ```
+
+> ⚠️ Registration no longer returns a session token: accounts are created
+> unverified and must be activated via the emailed link before login works.
 
 5. **Start the application**
 ```bash

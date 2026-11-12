@@ -1,10 +1,11 @@
 # Multi-stage build for production
 FROM node:18-alpine AS client-build
 
-# Build client
+# Build client (devDependencies are required to compile the CRA bundle)
 WORKDIR /app/client
 COPY client/package*.json ./
-RUN npm ci --only=production
+COPY client/patches ./patches
+RUN npm ci --no-audit --no-fund
 COPY client/ ./
 RUN npm run build
 
@@ -15,7 +16,7 @@ WORKDIR /app
 
 # Install server dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # Copy server files
 COPY . .

@@ -80,27 +80,49 @@ export const AuthProvider = ({ children }) => {
       toast.success('Welcome back!');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      const data = error.response?.data || {};
+      const message = data.message || 'Login failed';
       toast.error(message);
-      return { success: false, error: message };
+      return {
+        success: false,
+        error: message,
+        requiresVerification: Boolean(data.requiresVerification),
+        email,
+      };
     }
   };
 
   const register = async (name, email, password) => {
     try {
       const response = await axios.post('/auth/register', { name, email, password });
-      const { token, user: userData } = response.data;
+      const { requiresVerification, emailSent } = response.data;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
-
-      toast.success('Account created successfully!');
-      return { success: true };
+      // Registration no longer issues a session token: the account must be
+      // activated via the emailed verification link first.
+      return {
+        success: true,
+        requiresVerification: requiresVerification !== false,
+        emailSent: Boolean(emailSent),
+      };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
       toast.error(message);
       return { success: false, error: message };
+    }
+  };
+
+  const resendVerification = async (email) => {
+    try {
+      const response = await axios.post('/auth/resend-verification', { email });
+      if (response.data.emailSent) {
+        toast.success('Verification email sent - check your inbox');
+      } else {
+        toast.error('Could not send the verification email. Please try again later.');
+      }
+      return response.data;
+    } catch (error) {
+      toast.error('Could not send the verification email');
+      return null;
     }
   };
 
@@ -159,6 +181,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
+    resendVerification,
     logout,
     updateUser,
     updatePreferences,

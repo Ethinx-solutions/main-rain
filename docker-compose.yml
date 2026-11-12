@@ -1,30 +1,53 @@
-version: '3.8'
-
 services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "${APP_PORT:-5000}:5000"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongo:27017/secondbrain
-      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587
-      - EMAIL_USER=your-email@gmail.com
-      - EMAIL_PASS=your-app-password
-      - CLIENT_URL=http://localhost:5000
+      # Secrets are supplied from the .env file next to this compose file or
+      # the shell environment - never hard-coded here.
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET (openssl rand -hex 32) before starting}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      # Email verification
+      - MAIL_PROVIDER=${MAIL_PROVIDER:-auto}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - MAIL_FROM=${MAIL_FROM:-}
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASS=${EMAIL_PASS:-}
+      # AI Second Brain. Inside Docker, reach the existing host Ollama
+      # container over the shared ethinx-ai-net (see networks below);
+      # outside Docker the default is http://127.0.0.1:11434.
+      - EMBED_PROVIDER=${EMBED_PROVIDER:-ollama}
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - OLLAMA_URL=${OLLAMA_URL:-http://ethinx-ollama:11434}
+      - OLLAMA_EMBED_MODEL=${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      - LLM_MODEL=${LLM_MODEL:-qwen2.5:3b-instruct}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DOC_MAX_FILE_BYTES=${DOC_MAX_FILE_BYTES:-10485760}
     depends_on:
       - mongo
+    networks:
+      - default
+      - ollama-ai
     restart: unless-stopped
 
   mongo:
-    image: mongo:6.0
+    image: mongo:7
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
+
+networks:
+  # Shared with the existing ethinx-ollama container (docker network connect).
+  ollama-ai:
+    external: true
+    name: ethinx-ai-net
 
 volumes:
   mongo_data:

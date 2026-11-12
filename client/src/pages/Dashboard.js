@@ -8,8 +8,7 @@ import {
   Calendar,
   TrendingUp,
   Clock,
-  Star,
-  AlertCircle,
+    AlertCircle,
   Plus,
   ArrowRight
 } from 'lucide-react';

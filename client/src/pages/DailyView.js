@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { 
-  Calendar, 
+   
   ChevronLeft, 
   ChevronRight, 
   CheckSquare, 
@@ -12,7 +12,7 @@ import {
   Target
 } from 'lucide-react';
 import axios from 'axios';
-import { format, addDays, subDays, isToday, startOfDay } from 'date-fns';
+import { format, addDays, subDays, isToday } from 'date-fns';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const DailyView = () => {

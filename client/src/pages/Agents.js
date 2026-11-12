@@ -97,7 +97,6 @@ const mockActivities = [
 
 const Agents = () => {
   const [selectedAgent, setSelectedAgent] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
   const [viewMode, setViewMode] = useState('grid');
 
   const externalAgents = mockAgents.filter(agent => agent.requiresExternalAccess);

@@ -6,9 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(null); // { email, sent }
+  const [resending, setResending] = useState(false);
 
   const {
     register,
@@ -19,9 +21,25 @@ const Login = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      const result = await login(data.email, data.password);
+      if (result && result.requiresVerification) {
+        setNeedsVerification({ email: data.email, sent: null });
+      } else {
+        setNeedsVerification(null);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    if (!needsVerification) return;
+    setResending(true);
+    try {
+      const result = await resendVerification(needsVerification.email);
+      setNeedsVerification((p) => ({ ...p, sent: Boolean(result && result.emailSent) }));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -45,6 +63,23 @@ const Login = () => {
 
         {/* Login Form */}
         <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+          {needsVerification && (
+            <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md" data-testid="verify-required-banner">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                This account isn't activated yet. Check your inbox for the verification link we emailed you.
+                {needsVerification.sent === true && ' A fresh verification email was just sent.'}
+                {needsVerification.sent === false && ' Could not send a new email right now - please try again later.'}
+              </p>
+              <button
+                type="button"
+                onClick={onResend}
+                disabled={resending}
+                className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 disabled:opacity-50"
+              >
+                {resending ? 'Sending…' : 'Resend verification email'}
+              </button>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
             <div>
@@ -64,7 +99,7 @@ const Login = () => {
                     },
                   })}
                   type="email"
-                  autoComplete="email"
+                  id="email" autoComplete="email"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Enter your email"
                 />
@@ -94,6 +129,7 @@ const Login = () => {
                     },
                   })}
                   type={showPassword ? 'text' : 'password'}
+                  id="password"
                   autoComplete="current-password"
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Enter your password"

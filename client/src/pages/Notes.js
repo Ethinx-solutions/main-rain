@@ -3,12 +3,10 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { 
   Plus, 
   Search, 
-  Filter, 
-  Edit3, 
+    Edit3, 
   Trash2, 
   Star, 
-  Archive,
-  FileText,
+    FileText,
   Tag
 } from 'lucide-react';
 import axios from 'axios';

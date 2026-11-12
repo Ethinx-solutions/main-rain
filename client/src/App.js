@@ -11,6 +11,7 @@ import Links from './pages/Links';
 import DailyView from './pages/DailyView';
 import Agents from './pages/Agents';
 import Settings from './pages/Settings';
+import Assistant from './pages/Assistant';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
           <Route path="links" element={<Links />} />
           <Route path="daily" element={<DailyView />} />
           <Route path="agents" element={<Agents />} />
+          <Route path="assistant" element={<Assistant />} />
           <Route path="settings" element={<Settings />} />
         </Route>
         

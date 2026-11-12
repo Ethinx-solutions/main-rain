@@ -136,6 +136,8 @@ ecosystem.config.js
 test-results/
 coverage/
 
-# Misc
+# Second Brain runtime artifacts
+data/
+uploads/
 *.tgz
 *.tar.gz

@@ -6,9 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Register = () => {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, resendVerification } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pending, setPending] = useState(null); // { email, emailSent }
+  const [resending, setResending] = useState(false);
 
   const {
     register,
@@ -22,11 +24,75 @@ const Register = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await registerUser(data.name, data.email, data.password);
+      const result = await registerUser(data.name, data.email, data.password);
+      if (result && result.success) {
+        setPending({ email: data.email, emailSent: result.emailSent });
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const onResend = async () => {
+    setResending(true);
+    try {
+      const result = await resendVerification(pending.email);
+      if (result && result.emailSent) {
+        setPending((p) => ({ ...p, emailSent: true }));
+      }
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (pending) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 text-center">
+            <div className="flex justify-center">
+              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full">
+                <Mail className="w-8 h-8 text-blue-600 dark:text-blue-300" />
+              </div>
+            </div>
+            <h2 className="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+              Check your email
+            </h2>
+            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400" data-testid="verify-instructions">
+              {pending.emailSent ? (
+                <>
+                  We sent a verification link to <strong>{pending.email}</strong>.
+                  Click the link to activate your account, then sign in.
+                </>
+              ) : (
+                <>
+                  Your account was created, but the verification email could not
+                  be sent automatically. Please try resending below once email
+                  delivery is configured, or contact support.
+                </>
+              )}
+            </p>
+            <div className="mt-6 flex flex-col space-y-3">
+              <button
+                type="button"
+                onClick={onResend}
+                disabled={resending}
+                className="w-full py-2 px-4 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              >
+                {resending ? 'Sending…' : 'Resend verification email'}
+              </button>
+              <Link
+                to="/login"
+                className="w-full py-2 px-4 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Back to sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
@@ -67,7 +133,7 @@ const Register = () => {
                     },
                   })}
                   type="text"
-                  autoComplete="name"
+                  id="name" autoComplete="name"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Enter your full name"
                 />
@@ -97,7 +163,7 @@ const Register = () => {
                     },
                   })}
                   type="email"
-                  autoComplete="email"
+                  id="email" autoComplete="email"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Enter your email"
                 />
@@ -127,6 +193,7 @@ const Register = () => {
                     },
                   })}
                   type={showPassword ? 'text' : 'password'}
+                  id="password"
                   autoComplete="new-password"
                   className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Create a password"
@@ -166,6 +233,7 @@ const Register = () => {
                       value === password || 'Passwords do not match',
                   })}
                   type={showPassword ? 'text' : 'password'}
+                  id="confirmPassword"
                   autoComplete="new-password"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                   placeholder="Confirm your password"

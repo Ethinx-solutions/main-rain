@@ -1,15 +1,16 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  FileText, 
-  CheckSquare, 
-  Link, 
+import {
+  Home,
+  FileText,
+  CheckSquare,
+  Link,
   Calendar,
   Settings,
   Brain,
   X,
-  Bot
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,6 +19,7 @@ const navigation = [
   { name: 'Notes', href: '/notes', icon: FileText },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Links', href: '/links', icon: Link },
+  { name: 'AI Assistant', href: '/assistant', icon: Sparkles },
   { name: 'Daily View', href: '/daily', icon: Calendar },
   { name: 'Agents', href: '/agents', icon: Bot },
   { name: 'Settings', href: '/settings', icon: Settings },
@@ -47,9 +49,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           
           {/* Navigation */}
           <nav className="flex flex-1 flex-col">
-            <ul role="list" className="flex flex-1 flex-col gap-y-7">
+            <ul className="flex flex-1 flex-col gap-y-7">
               <li>
-                <ul role="list" className="-mx-2 space-y-1">
+                <ul className="-mx-2 space-y-1">
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
@@ -129,9 +131,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           
           {/* Navigation */}
           <nav className="flex flex-1 flex-col">
-            <ul role="list" className="flex flex-1 flex-col gap-y-7">
+            <ul className="flex flex-1 flex-col gap-y-7">
               <li>
-                <ul role="list" className="-mx-2 space-y-1">
+                <ul className="-mx-2 space-y-1">
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
