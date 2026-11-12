@@ -7,7 +7,9 @@ COPY client/package*.json ./
 COPY client/patches ./patches
 RUN npm ci --no-audit --no-fund
 COPY client/ ./
-RUN npm run build
+# Relative API base: the bundle calls /api on its own origin, which works
+# behind any HTTPS reverse proxy (CSP connect-src 'self' covers it).
+RUN REACT_APP_API_URL=/api npm run build
 
 # Production server
 FROM node:18-alpine AS production
