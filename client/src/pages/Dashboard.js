@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
 import {
   FileText, CheckSquare, Link as LinkIcon, Calendar, TrendingUp,
-  Clock, AlertCircle, Plus, ArrowRight, Sparkles, Zap, ShieldCheck
+  Clock, AlertCircle, Plus, ArrowRight, Sparkles, Zap, ShieldCheck, Send
 } from 'lucide-react';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -89,7 +89,11 @@ const Dashboard = () => {
           <h2>Ask your Second Brain</h2>
           <p>Search your own notes, links and indexed business documents for precise, cited answers.</p>
         </div>
-        <Link to="/assistant" className="sb-primary-action">Ask a question <ArrowRight className="h-4 w-4" /></Link>
+        <Link to="/assistant" className="sb-ai-prompt" aria-label="Ask a question">
+          <Sparkles className="h-4 w-4" />
+          <span>e.g. What is our quoting procedure?</span>
+          <span className="sb-ai-prompt__send"><Send className="h-4 w-4" /></span>
+        </Link>
       </section>
 
       <section className="sb-action-bar" aria-label="Quick actions">
