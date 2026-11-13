@@ -7,12 +7,12 @@ import {
   Link,
   Calendar,
   Settings,
-  Brain,
   X,
   Bot,
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import BrandMark from './BrandMark';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -38,13 +38,10 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-6 pb-4 shadow-lg">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
           {/* Logo */}
-          <div className="flex h-16 shrink-0 items-center">
-            <Brain className="h-8 w-8 text-blue-600" />
-            <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-              Second Brain
-            </span>
+          <div className="flex h-20 shrink-0 items-center">
+            <BrandMark compact />
           </div>
           
           {/* Navigation */}
@@ -59,16 +56,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                         <NavLink
                           to={item.href}
                           className={`
-                            group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200
+                            group flex gap-x-3 rounded-lg px-3 py-2.5 text-sm leading-6 font-semibold transition-colors duration-200
                             ${isActive
-                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400'
-                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-700'
+                              ? 'bg-blue-50 text-blue-600 dark:bg-yellow-900/30 dark:text-yellow-200 ring-1 ring-inset ring-yellow-800/40'
+                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-yellow-200 dark:hover:bg-gray-700'
                             }
                           `}
                         >
                           <item.icon
                             className={`h-6 w-6 shrink-0 ${
-                              isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                              isActive ? 'text-blue-600 dark:text-yellow-200' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-yellow-200'
                             }`}
                           />
                           {item.name}
@@ -83,7 +80,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <li className="mt-auto">
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div className="flex items-center gap-x-3 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-gray-900 text-sm font-bold ring-1 ring-yellow-200/50">
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -112,18 +109,14 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div className={`lg:hidden fixed inset-y-0 z-50 flex w-64 flex-col transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-6 pb-4 shadow-lg">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
           {/* Mobile header with close button */}
           <div className="flex h-16 shrink-0 items-center justify-between">
-            <div className="flex items-center">
-              <Brain className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
-                Second Brain
-              </span>
-            </div>
+            <BrandMark compact />
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              aria-label="Close navigation"
             >
               <X className="h-6 w-6" />
             </button>
@@ -142,16 +135,16 @@ const Sidebar = ({ isOpen, onClose }) => {
                           to={item.href}
                           onClick={onClose}
                           className={`
-                            group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200
+                            group flex gap-x-3 rounded-lg px-3 py-2.5 text-sm leading-6 font-semibold transition-colors duration-200
                             ${isActive
-                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400'
-                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-blue-400 dark:hover:bg-gray-700'
+                              ? 'bg-blue-50 text-blue-600 dark:bg-yellow-900/30 dark:text-yellow-200 ring-1 ring-inset ring-yellow-800/40'
+                              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-yellow-200 dark:hover:bg-gray-700'
                             }
                           `}
                         >
                           <item.icon
                             className={`h-6 w-6 shrink-0 ${
-                              isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                              isActive ? 'text-blue-600 dark:text-yellow-200' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-yellow-200'
                             }`}
                           />
                           {item.name}
@@ -166,7 +159,7 @@ const Sidebar = ({ isOpen, onClose }) => {
               <li className="mt-auto">
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <div className="flex items-center gap-x-3 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-gray-900 text-sm font-bold ring-1 ring-yellow-200/50">
                       {user?.name?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">

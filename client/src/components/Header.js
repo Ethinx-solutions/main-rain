@@ -7,12 +7,12 @@ const Header = ({ onMenuClick }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Initialize dark mode from localStorage or system preference
+  // The product defaults to its executive graphite theme; respect an explicit
+  // light-theme choice if the user has made one.
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+
+    if (savedTheme !== 'light') {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
     } else {
@@ -60,7 +60,7 @@ const Header = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-yellow-900/30">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Left side */}
@@ -70,6 +70,7 @@ const Header = ({ onMenuClick }) => {
               type="button"
               className="lg:hidden -m-2.5 p-2.5 text-gray-700 dark:text-gray-300"
               onClick={onMenuClick}
+              aria-label="Open navigation"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -86,7 +87,7 @@ const Header = ({ onMenuClick }) => {
           </div>
 
           {/* Center - Search */}
-          <div className="flex-1 max-w-lg mx-4">
+          <div className="hidden sm:block flex-1 max-w-lg mx-4">
             <form onSubmit={handleSearch} className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -95,7 +96,7 @@ const Header = ({ onMenuClick }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search notes, tasks, links..."
+                placeholder="Search your Second Brain..."
                 className="block w-full rounded-md border-0 bg-gray-50 dark:bg-gray-700 py-1.5 pl-10 pr-3 text-gray-900 dark:text-white placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 transition-colors duration-200"
               />
             </form>
@@ -106,8 +107,9 @@ const Header = ({ onMenuClick }) => {
             {/* Quick add button */}
             <button
               type="button"
-              className="relative rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
+              className="relative rounded-full bg-blue-600 p-2 text-gray-900 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
               title="Quick add"
+              aria-label="Quick add"
             >
               <Plus className="h-5 w-5" />
             </button>
@@ -117,6 +119,7 @@ const Header = ({ onMenuClick }) => {
               type="button"
               className="relative rounded-full bg-gray-50 dark:bg-gray-700 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
               title="Notifications"
+              aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
               {/* Notification badge */}
@@ -131,6 +134,7 @@ const Header = ({ onMenuClick }) => {
               onClick={toggleDarkMode}
               className="relative rounded-full bg-gray-50 dark:bg-gray-700 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? (
                 <Sun className="h-5 w-5" />
@@ -143,7 +147,7 @@ const Header = ({ onMenuClick }) => {
             <div className="relative">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-gray-900 text-sm font-bold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200"
                 title={user?.name}
               >
                 {user?.name?.charAt(0).toUpperCase()}

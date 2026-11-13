@@ -14,7 +14,29 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #fafafa;
+  background-color: #0b0b0d;
+  color: #f5f3ee;
+}
+
+:root {
+  color-scheme: dark;
+  --ethinx-black: #0b0b0d;
+  --ethinx-graphite: #171719;
+  --ethinx-graphite-raised: #232326;
+  --ethinx-gold: #d4af37;
+  --ethinx-gold-light: #f2d27a;
+  --ethinx-ivory: #f5f3ee;
+  --ethinx-muted: #aaa69d;
+}
+
+h1, h2, h3, .brand-mark__name {
+  font-family: 'Manrope', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.35);
+  color: var(--ethinx-ivory);
 }
 
 code {
@@ -28,16 +50,16 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #171719;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #6b5726;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #d4af37;
 }
 
 /* Dark mode scrollbar */
@@ -108,11 +130,11 @@ code {
 }
 
 .gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8e6d1d 0%, #d4af37 55%, #f2d27a 100%);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #d4af37 0%, #f2d27a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -138,7 +160,7 @@ code {
 
 /* Button styles */
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus-ring;
+  @apply bg-blue-600 hover:bg-blue-700 text-gray-900 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 focus-ring;
 }
 
 .btn-secondary {
@@ -168,8 +190,8 @@ code {
 
 /* Loading spinner */
 .spinner {
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #3498db;
+  border: 2px solid #454341;
+  border-top: 2px solid #d4af37;
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -296,4 +318,165 @@ code {
 
 .dark .markdown-content blockquote {
   @apply border-gray-600 text-gray-400;
+}
+
+/* EthinX identity */
+.brand-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.brand-mark__emblem {
+  width: 7.5rem;
+  height: 7.5rem;
+  object-fit: cover;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px rgba(242, 210, 122, 0.45), 0 18px 55px rgba(212, 175, 55, 0.13);
+}
+
+.brand-mark__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.brand-mark__eyebrow {
+  color: var(--ethinx-gold-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  margin-right: -0.32em;
+}
+
+.brand-mark__name {
+  margin-top: 0.4rem;
+  color: var(--ethinx-ivory);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.brand-mark--compact {
+  flex-direction: row;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.brand-mark--compact .brand-mark__emblem {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+}
+
+.brand-mark--compact .brand-mark__copy {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.brand-mark--compact .brand-mark__eyebrow { font-size: 0.55rem; }
+.brand-mark--compact .brand-mark__name { font-size: 1rem; white-space: nowrap; }
+
+.auth-shell {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 3rem 1rem;
+  background:
+    radial-gradient(circle at 50% 5%, rgba(212, 175, 55, 0.12), transparent 28rem),
+    linear-gradient(155deg, #080809 0%, #111113 48%, #0b0b0d 100%);
+}
+
+.auth-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  background-image: linear-gradient(rgba(212, 175, 55, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
+.auth-orbit {
+  position: absolute;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.auth-orbit--one { width: 32rem; height: 32rem; top: -19rem; right: -9rem; }
+.auth-orbit--two { width: 23rem; height: 23rem; bottom: -15rem; left: -8rem; }
+
+.auth-shell__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 29rem;
+}
+
+.auth-shell__header { margin: 2rem 0 1.5rem; text-align: center; }
+.auth-shell__header h1 { color: var(--ethinx-ivory); font-size: 1.875rem; font-weight: 700; }
+.auth-shell__header p { margin-top: 0.5rem; color: var(--ethinx-muted); font-size: 0.875rem; }
+
+.auth-card {
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  background: rgba(23, 23, 25, 0.92);
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+}
+
+.auth-card a { color: var(--ethinx-gold-light) !important; }
+.auth-card a:hover { color: #fff3c4 !important; }
+
+.auth-shell__footer {
+  margin-top: 1.5rem;
+  color: #77746e;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dark input:not([type='checkbox']):not([type='radio']),
+.dark textarea,
+.dark select {
+  border-color: #454341;
+  background-color: #111113;
+}
+
+.dark input:not([type='checkbox']):not([type='radio']):focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: var(--ethinx-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.22);
+}
+
+.dark .bg-blue-600, .dark .bg-blue-500 {
+  color: #0b0b0d;
+  background-color: var(--ethinx-gold);
+}
+
+.dark .hover\:bg-blue-700:hover { background-color: var(--ethinx-gold-light); }
+.dark .text-blue-600, .dark .text-blue-500, .dark .text-blue-400 { color: var(--ethinx-gold-light); }
+.dark .border-blue-500 { border-color: var(--ethinx-gold); }
+
+@media (max-width: 640px) {
+  .auth-shell { align-items: flex-start; padding-top: 2rem; }
+  .brand-mark__emblem { width: 6.25rem; height: 6.25rem; }
+  .auth-card { padding: 1.5rem 1.1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+client/node_modules
+client/build
+coverage
+test-results
+work
+*.log
+.env
+.env.*
+!.env.example

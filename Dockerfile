@@ -1,5 +1,5 @@
 # Multi-stage build for production
-FROM node:18-alpine AS client-build
+FROM node:20-alpine AS client-build
 
 # Build client (devDependencies are required to compile the CRA bundle)
 WORKDIR /app/client
@@ -12,7 +12,7 @@ COPY client/ ./
 RUN REACT_APP_API_URL=/api npm run build
 
 # Production server
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Brain, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AuthShell from '../components/AuthShell';
 
 const Login = () => {
   const { login, resendVerification } = useAuth();
@@ -44,25 +45,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome back
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Sign in to your Second Brain account
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+    <AuthShell title="Welcome back" subtitle="Sign in to your private knowledge workspace">
+        <div className="auth-card">
           {needsVerification && (
             <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md" data-testid="verify-required-banner">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
@@ -138,6 +122,7 @@ const Login = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide entered text' : 'Show entered text'}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
@@ -182,7 +167,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-semibold rounded-md text-gray-900 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {isLoading ? (
                   <LoadingSpinner size="sm" />
@@ -206,19 +191,7 @@ const Login = () => {
             </div>
           </form>
         </div>
-
-        {/* Demo credentials */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
-            Demo Credentials
-          </h3>
-          <p className="text-xs text-yellow-700 dark:text-yellow-300">
-            Email: demo@example.com<br />
-            Password: demo123
-          </p>
-        </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };
 

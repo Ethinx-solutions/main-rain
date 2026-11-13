@@ -8,6 +8,12 @@ import './index.css';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 
+// The executive dark theme is the product default. A user-selected light
+// preference is still respected and can be changed from the dashboard.
+if (localStorage.getItem('theme') !== 'light') {
+  document.documentElement.classList.add('dark');
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -30,14 +36,15 @@ root.render(
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#363636',
-                color: '#fff',
+                background: '#171719',
+                color: '#F5F3EE',
+                border: '1px solid rgba(212, 175, 55, 0.35)',
               },
               success: {
                 duration: 3000,
                 iconTheme: {
-                  primary: '#4ade80',
-                  secondary: '#fff',
+                  primary: '#D4AF37',
+                  secondary: '#0B0B0D',
                 },
               },
               error: {
@@ -51,7 +58,7 @@ root.render(
           />
         </AuthProvider>
       </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   </React.StrictMode>
 );

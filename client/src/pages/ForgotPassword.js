@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Brain, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AuthShell from '../components/AuthShell';
 
 /** Request a password-reset link. The API always returns a generic response. */
 const ForgotPassword = () => {
@@ -26,21 +27,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Reset your password</h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Enter your account email and we’ll send a reset link
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+    <AuthShell title="Reset your password" subtitle="Enter your account email and we’ll send a secure reset link">
+        <div className="auth-card">
           {submitted ? (
             <div className="text-center" data-testid="forgot-password-sent">
               <div className="flex justify-center">
@@ -94,8 +82,7 @@ const ForgotPassword = () => {
             </form>
           )}
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };
 

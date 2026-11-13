@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Brain, Lock, CheckCircle } from 'lucide-react';
+import { Lock, CheckCircle } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AuthShell from '../components/AuthShell';
 
 /** Handles the /reset-password?token=... link from the password-reset email. */
 const ResetPassword = () => {
@@ -37,18 +38,8 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Choose a new password</h2>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+    <AuthShell title="Choose a new password" subtitle="Create a secure password for your EthinX workspace">
+        <div className="auth-card">
           {success ? (
             <div className="text-center" data-testid="reset-password-success">
               <div className="flex justify-center">
@@ -116,8 +107,7 @@ const ResetPassword = () => {
             </form>
           )}
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };
 

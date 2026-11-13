@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Brain, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AuthShell from '../components/AuthShell';
 
 const Register = () => {
   const { register: registerUser, resendVerification } = useAuth();
@@ -47,17 +48,13 @@ const Register = () => {
 
   if (pending) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 text-center">
+      <AuthShell title="Check your email" subtitle="One secure step before your workspace is ready">
+          <div className="auth-card text-center">
             <div className="flex justify-center">
               <div className="flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full">
                 <Mail className="w-8 h-8 text-blue-600 dark:text-blue-300" />
               </div>
             </div>
-            <h2 className="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
-              Check your email
-            </h2>
             <p className="mt-3 text-sm text-gray-600 dark:text-gray-400" data-testid="verify-instructions">
               {pending.emailSent ? (
                 <>
@@ -89,31 +86,13 @@ const Register = () => {
               </Link>
             </div>
           </div>
-        </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Create your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Start building your Second Brain today
-          </p>
-        </div>
-
-        {/* Register Form */}
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+    <AuthShell title="Create your account" subtitle="Build a private, searchable home for your knowledge">
+        <div className="auth-card">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Name */}
             <div>
@@ -202,6 +181,7 @@ const Register = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide entered text' : 'Show entered text'}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
@@ -285,7 +265,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-semibold rounded-md text-gray-900 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {isLoading ? (
                   <LoadingSpinner size="sm" />
@@ -309,8 +289,7 @@ const Register = () => {
             </div>
           </form>
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };
 

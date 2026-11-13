@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Brain, CheckCircle, XCircle, Mail } from 'lucide-react';
+import { CheckCircle, XCircle, Mail } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import AuthShell from '../components/AuthShell';
 
 /**
  * Handles the /verify-email?token=... link sent in the verification email.
@@ -38,20 +39,8 @@ const VerifyEmail = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Email verification
-          </h2>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 text-center">
+    <AuthShell title="Email verification" subtitle="Securing your private Second Brain workspace">
+        <div className="auth-card text-center">
           <div className="flex justify-center" data-testid="verify-status-icon">
             {status === 'verifying' && <Mail className="w-10 h-10 text-blue-600 dark:text-blue-300" />}
             {status === 'success' && <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />}
@@ -89,8 +78,7 @@ const VerifyEmail = () => {
             </>
           )}
         </div>
-      </div>
-    </div>
+    </AuthShell>
   );
 };
 

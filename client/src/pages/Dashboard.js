@@ -60,21 +60,21 @@ const Dashboard = () => {
       name: 'Active Tasks',
       value: (summary?.totalTasks || 0) - (summary?.completedTasks || 0),
       icon: CheckSquare,
-      color: 'bg-green-500',
+      color: 'bg-blue-500',
       href: '/tasks'
     },
     {
       name: 'Saved Links',
       value: summary?.totalLinks || 0,
       icon: LinkIcon,
-      color: 'bg-purple-500',
+      color: 'bg-blue-500',
       href: '/links'
     },
     {
       name: 'Completion Rate',
       value: `${summary?.completionRate || 0}%`,
       icon: TrendingUp,
-      color: 'bg-orange-500',
+      color: 'bg-blue-500',
       href: '/tasks'
     }
   ];
@@ -91,21 +91,21 @@ const Dashboard = () => {
       name: 'Add Task',
       description: 'Create a new task',
       icon: CheckSquare,
-      color: 'bg-green-500',
+      color: 'bg-blue-500',
       href: '/tasks?new=true'
     },
     {
       name: 'Save Link',
       description: 'Bookmark a resource',
       icon: LinkIcon,
-      color: 'bg-purple-500',
+      color: 'bg-blue-500',
       href: '/links?new=true'
     },
     {
       name: 'Daily View',
       description: 'See today\'s agenda',
       icon: Calendar,
-      color: 'bg-orange-500',
+      color: 'bg-blue-500',
       href: '/daily'
     }
   ];
@@ -113,12 +113,14 @@ const Dashboard = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          Welcome back! 👋
+      <div className="relative overflow-hidden bg-gray-800 rounded-xl shadow-2xl p-6 sm:p-8 text-white border border-yellow-900/40">
+        <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-yellow-900/20 to-transparent" aria-hidden="true" />
+        <p className="relative text-xs font-bold tracking-widest text-blue-400 uppercase mb-2">EthinX Second Brain</p>
+        <h1 className="relative text-2xl sm:text-3xl font-bold mb-2">
+          Welcome back
         </h1>
-        <p className="text-blue-100">
-          Here's what's happening in your Second Brain today
+        <p className="relative text-gray-400 max-w-2xl">
+          Your knowledge, priorities and AI workspace — organised for the day ahead.
         </p>
       </div>
 
