@@ -38,7 +38,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
+        <div className="app-sidebar flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
           {/* Logo */}
           <div className="flex h-20 shrink-0 items-center">
             <BrandMark compact />
@@ -109,7 +109,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       <div className={`lg:hidden fixed inset-y-0 z-50 flex w-64 flex-col transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
+        <div className="app-sidebar flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-5 pb-4 shadow-2xl border-r border-gray-200 dark:border-yellow-900/40">
           {/* Mobile header with close button */}
           <div className="flex h-16 shrink-0 items-center justify-between">
             <BrandMark compact />

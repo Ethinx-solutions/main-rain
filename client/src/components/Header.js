@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   Menu,
-  Search,
   Bell,
   Sun,
   Moon,
@@ -24,7 +23,6 @@ const Header = ({ onMenuClick }) => {
   const navigate = useNavigate();
   const menuAreaRef = useRef(null);
   const [darkMode, setDarkMode] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [openMenu, setOpenMenu] = useState(null);
 
   const { data: dashboardData, isLoading: notificationsLoading, isError: notificationsError } = useQuery(
@@ -89,14 +87,6 @@ const Header = ({ onMenuClick }) => {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Implement global search functionality
-      console.log('Searching for:', searchQuery);
-    }
-  };
-
   const getCurrentTime = () => {
     return new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -135,8 +125,8 @@ const Header = ({ onMenuClick }) => {
   });
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-yellow-900/30">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <header className="app-header sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-yellow-900/30">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Left side */}
           <div className="flex items-center gap-x-4">
@@ -161,20 +151,10 @@ const Header = ({ onMenuClick }) => {
             </div>
           </div>
 
-          {/* Center - Search */}
-          <div className="hidden sm:block flex-1 max-w-lg mx-4">
-            <form onSubmit={handleSearch} className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search your Second Brain..."
-                className="block w-full rounded-md border-0 bg-gray-50 dark:bg-gray-700 py-1.5 pl-10 pr-3 text-gray-900 dark:text-white placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-600 focus:ring-2 focus:ring-blue-500 sm:text-sm sm:leading-6 transition-colors duration-200"
-              />
-            </form>
+          {/* Center brand treatment */}
+          <div className="hidden sm:flex flex-1 min-w-0 mx-4 flex-col items-center justify-center leading-none" aria-label="EthinX Second Brain">
+            <span className="text-[11px] font-extrabold tracking-[0.18em] text-blue-700 dark:text-yellow-300 uppercase">EthinX Second Brain</span>
+            <span className="mt-1 text-[9px] tracking-[0.08em] text-gray-400 dark:text-gray-500">Powered by EthinX</span>
           </div>
 
           {/* Right side */}

@@ -18,7 +18,7 @@ const Layout = () => {
         
         {/* Page content */}
         <main className="py-6 sm:py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>
