@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -15,11 +16,19 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Links = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showNewLinkForm, setShowNewLinkForm] = useState(false);
   const [editingLink, setEditingLink] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowNewLinkForm(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: linksData, isLoading } = useQuery(
     ['links', { search: searchQuery, category: selectedCategory }],

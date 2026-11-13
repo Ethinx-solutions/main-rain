@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -14,11 +15,19 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Notes = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowNewNoteForm(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: notesData, isLoading } = useQuery(
     ['notes', { search: searchQuery, category: selectedCategory }],

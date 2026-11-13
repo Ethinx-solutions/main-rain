@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -16,12 +17,20 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Tasks = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('active');
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowNewTaskForm(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const { data: tasksData, isLoading } = useQuery(
     ['tasks', { search: searchQuery, status: selectedStatus, priority: selectedPriority }],
