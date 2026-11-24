@@ -9,20 +9,40 @@ import {
   Trash2,
   Save
 } from 'lucide-react';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Settings = () => {
-  const { user, updatePreferences } = useAuth();
+  const { user, updateUser, updatePreferences } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const [name, setName] = useState(user?.name ?? '');
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    if (!name.trim() || savingProfile) return;
+    setSavingProfile(true);
+    try {
+      const { data } = await axios.patch('/auth/profile', { name });
+      updateUser(data.user);
+      setName(data.user.name);
+      toast.success('Profile updated');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not update profile');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   const [isLoading, setIsLoading] = useState(false);
   
   const [preferences, setPreferences] = useState({
     theme: user?.preferences?.theme || 'auto',
     dailyGoal: user?.preferences?.dailyGoal || 3,
     notifications: {
-      email: user?.preferences?.notifications?.email || true,
-      browser: user?.preferences?.notifications?.browser || true
+      email: user?.preferences?.notifications?.email ?? true,
+      browser: user?.preferences?.notifications?.browser ?? true
     }
   });
 
@@ -52,21 +72,26 @@ const Settings = () => {
     }
   };
 
-  const ProfileTab = () => (
-    <div className="space-y-6">
+  const renderProfile = () => (
+    <form onSubmit={saveProfile} className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Profile Information
         </h3>
         <div className="grid grid-cols-1 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Name
+            <label htmlFor="display-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Display name
             </label>
             <input
               type="text"
-              value={user?.name || ''}
-              disabled
+              id="display-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+              required
+              maxLength={100}
+              disabled={savingProfile}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
@@ -94,7 +119,14 @@ const Settings = () => {
           </div>
         </div>
       </div>
-    </div>
+      <button
+        type="submit"
+        disabled={savingProfile || !name.trim() || name.trim() === user?.name}
+        className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+      >
+        {savingProfile ? 'Saving…' : 'Save profile'}
+      </button>
+    </form>
   );
 
   const PreferencesTab = () => (
@@ -294,7 +326,7 @@ const Settings = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <ProfileTab />;
+        return renderProfile();
       case 'preferences':
         return <PreferencesTab />;
       case 'notifications':
@@ -302,7 +334,7 @@ const Settings = () => {
       case 'data':
         return <DataTab />;
       default:
-        return <ProfileTab />;
+        return renderProfile();
     }
   };
 

@@ -44,13 +44,13 @@ async function deleteDocumentChunks(userId, documentId) {
 }
 
 /**
- * Semantic search scoped to one tenant (userId), optionally one document.
+ * Semantic search scoped to one tenant (userId), optionally a set of documents.
  * Returns [{ documentId, chunkIndex, text, score, embeddingModel }].
  */
-async function searchChunks(userId, queryVector, { k = 8, documentId = null } = {}) {
+async function searchChunks(userId, queryVector, { k = 8, documentIds } = {}) {
   const limit = Math.max(1, Math.min(parseInt(k, 10) || 8, 50));
   const query = { userId };
-  if (documentId) query.documentId = documentId;
+  if (documentIds) query.documentId = { $in: documentIds };
 
   const candidates = await Chunk.find(query)
     .select('documentId chunkIndex text embedding embeddingModel')

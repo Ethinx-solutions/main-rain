@@ -39,11 +39,14 @@ describe('AI Assistant page', () => {
     });
     render(<Assistant />);
     expect(await screen.findByTestId('document-item')).toBeInTheDocument();
-    expect(screen.getByText('alpha.txt')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'alpha.txt' })).toBeInTheDocument();
     expect(screen.getByText('ready')).toBeInTheDocument();
   });
 
-  test('asking a question renders the answer with source citations', async () => {
+  test('asking within a selected document renders the answer with source citations', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: { documents: [{ _id: 'doc1', originalName: 'aurora-brief.txt', status: 'ready' }] },
+    });
     axios.post.mockResolvedValueOnce({
       data: {
         answer: 'The deadline is March 14, 2027 [1].',
@@ -58,15 +61,21 @@ describe('AI Assistant page', () => {
     render(<Assistant />);
     expect(await screen.findByTestId('assistant-page')).toBeInTheDocument();
 
+    await screen.findByRole('option', { name: 'aurora-brief.txt' });
+    await userEvent.selectOptions(screen.getByLabelText('Search in'), 'doc1');
     await userEvent.type(screen.getByTestId('question-input'), 'When is the Aurora deadline?');
     await userEvent.click(screen.getByTestId('ask-button'));
 
     await waitFor(() => {
-      expect(axios.post).toHaveBeenCalledWith('/ai/query', { question: 'When is the Aurora deadline?' });
+      expect(axios.post).toHaveBeenCalledWith(
+        '/ai/query',
+        { question: 'When is the Aurora deadline?', documentId: 'doc1' },
+        expect.objectContaining({ timeout: expect.any(Number) }),
+      );
     });
     expect(await screen.findByTestId('answer-block')).toBeInTheDocument();
     expect(screen.getByText(/march 14, 2027/i)).toBeInTheDocument();
-    expect(screen.getByText(/aurora-brief\.txt/)).toBeInTheDocument();
+    expect(screen.getByText(/aurora-brief\.txt · part 1/)).toBeInTheDocument();
     expect(screen.getByText(/cited in answer/i)).toBeInTheDocument();
   });
 });

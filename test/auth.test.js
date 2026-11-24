@@ -195,4 +195,26 @@ describe('Authentication & session handling', () => {
     const noAuth = await request(app).put('/api/auth/preferences').send({ theme: 'light' });
     expect(noAuth.status).toBe(401);
   });
+  test('authenticated profile updates only the display name and returns the membership date', async () => {
+    const account = await createUser();
+    const header = authHeader(account.token);
+    const original = await request(app).get('/api/auth/me').set(header);
+    expect(original.body.user.createdAt).toBeTruthy();
+
+    const invalid = await request(app).patch('/api/auth/profile').set(header).send({ name: '  ' });
+    expect(invalid.status).toBe(400);
+
+    const updated = await request(app).patch('/api/auth/profile').set(header)
+      .send({ name: '  Updated name  ', email: 'changed@example.com', isVerified: false });
+    expect(updated.status).toBe(200);
+    expect(updated.body.user).toMatchObject({
+      name: 'Updated name',
+      email: original.body.user.email,
+      isVerified: true,
+      createdAt: original.body.user.createdAt,
+    });
+    const persisted = await request(app).get('/api/auth/me').set(header);
+    expect(persisted.body.user.name).toBe('Updated name');
+  });
+
 });

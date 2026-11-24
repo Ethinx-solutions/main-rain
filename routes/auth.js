@@ -23,9 +23,13 @@ function appUrl() {
   return (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/$/, '');
 }
 
+const escapeHtml = (value) => value.replace(/[&<>"']/g, (char) => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[char]));
+
 function verificationEmailHtml({ name, url }) {
   return `
-    <h2>Welcome to Second Brain${name ? `, ${name}` : ''}!</h2>
+    <h2>Welcome to Second Brain${name ? `, ${escapeHtml(name)}` : ''}!</h2>
     <p>Please confirm your email address by clicking the link below. The link expires in 24 hours.</p>
     <p><a href="${url}" style="background:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Verify Email</a></p>
     <p>Or paste this URL into your browser: ${url}</p>
@@ -36,7 +40,7 @@ function verificationEmailHtml({ name, url }) {
 function resetEmailHtml({ name, url }) {
   return `
     <h2>Password Reset Request</h2>
-    <p>Hi${name ? ` ${name}` : ''}, click the link below to choose a new password. The link expires in 1 hour.</p>
+    <p>Hi${name ? ` ${escapeHtml(name)}` : ''}, click the link below to choose a new password. The link expires in 1 hour.</p>
     <p><a href="${url}" style="background:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Reset Password</a></p>
     <p>Or paste this URL into your browser: ${url}</p>
     <p>If you didn't request this, you can ignore this email and your password will stay unchanged.</p>
@@ -106,6 +110,17 @@ router.post('/register', async (req, res) => {
   }
 });
 
+function profileResponse(user) {
+  return {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    isVerified: user.isVerified,
+    preferences: user.preferences,
+    createdAt: user.createdAt,
+  };
+}
+
 // Login: blocked until the email address is verified.
 router.post('/login', async (req, res) => {
   try {
@@ -132,13 +147,7 @@ router.post('/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        isVerified: user.isVerified,
-        preferences: user.preferences,
-      },
+      user: profileResponse(user),
     });
   } catch (error) {
     console.error('Login error:', error.message);
@@ -146,21 +155,26 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Get current user
-router.get('/me', auth, async (req, res) => {
+router.get('/me', auth, (req, res) => {
+  res.json({ user: profileResponse(req.user) });
+});
+
+router.patch('/profile', auth, async (req, res) => {
+  const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+  if (!name || name.length > 100) {
+    return res.status(400).json({ message: 'Enter a display name between 1 and 100 characters.' });
+  }
+
   try {
-    res.json({
-      user: {
-        id: req.user._id,
-        email: req.user.email,
-        name: req.user.name,
-        isVerified: req.user.isVerified,
-        preferences: req.user.preferences,
-      },
+    const user = await User.findByIdAndUpdate(req.user._id, { $set: { name } }, {
+      new: true,
+      runValidators: true,
     });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user: profileResponse(user) });
   } catch (error) {
-    console.error('Get user error:', error.message);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Update profile error:', error.message);
+    res.status(500).json({ message: 'Could not update profile' });
   }
 });
 

@@ -12,8 +12,20 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
+function displayFilename(filename) {
+  if (/[^\u0020-\u00ff]/.test(filename)) return filename;
+  try {
+    const bytes = Uint8Array.from(filename, (character) => character.charCodeAt(0));
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return filename;
+  }
+}
+
 const Assistant = () => {
   const [question, setQuestion] = useState('');
+  const [documentId, setDocumentId] = useState('');
+  const [answerError, setAnswerError] = useState('');
   const [asking, setAsking] = useState(false);
   const [result, setResult] = useState(null); // { answer, sources, provider, model, tookMs }
   const [uploading, setUploading] = useState(false);
@@ -24,8 +36,10 @@ const Assistant = () => {
   const loadDocuments = async () => {
     try {
       const res = await axios.get('/documents?limit=50');
-      setDocuments(res.data.documents || []);
-      return res.data.documents || [];
+      const nextDocuments = res.data.documents || [];
+      setDocuments(nextDocuments);
+      setDocumentId((selected) => nextDocuments.some((doc) => doc._id === selected && doc.status === 'ready') ? selected : '');
+      return nextDocuments;
     } catch (error) {
       toast.error('Could not load documents');
       return [];
@@ -83,12 +97,17 @@ const Assistant = () => {
     if (!question.trim() || asking) return;
     setAsking(true);
     setResult(null);
+    setAnswerError('');
     try {
-      const res = await axios.post('/ai/query', { question: question.trim() });
+      const res = await axios.post('/ai/query', {
+        question: question.trim(),
+        ...(documentId && { documentId }),
+      }, { timeout: 95000 });
       setResult(res.data);
     } catch (error) {
-      const message = error.response?.data?.message || 'Could not answer the question';
-      toast.error(message);
+      setAnswerError(error.code === 'ECONNABORTED' || [504, 524].includes(error.response?.status)
+        ? 'The assistant took too long to respond. Try a shorter question or choose one document.'
+        : error.response?.data?.message || 'Could not answer the question. Try again.');
     } finally {
       setAsking(false);
     }
@@ -155,7 +174,7 @@ const Assistant = () => {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
                         <FileText className="h-4 w-4 shrink-0 text-gray-400" />
-                        {doc.originalName}
+                        {displayFilename(doc.originalName)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                         {doc.chunkCount} chunks · {Math.round((doc.charCount || 0) / 1000)}k chars
@@ -192,6 +211,21 @@ const Assistant = () => {
               <h2 className="font-semibold text-gray-900 dark:text-white">Ask your second brain</h2>
             </div>
             <div className="p-4">
+              <label htmlFor="question-document" className="block text-sm text-gray-700 dark:text-gray-300">
+                Search in
+              </label>
+              <select
+                id="question-document"
+                value={documentId}
+                onChange={(event) => setDocumentId(event.target.value)}
+                disabled={asking || docsLoading}
+                className="mb-4 mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700"
+              >
+                <option value="">All indexed documents</option>
+                {documents.filter((doc) => doc.status === 'ready').map((doc) => (
+                  <option key={doc._id} value={doc._id}>{displayFilename(doc.originalName)}</option>
+                ))}
+              </select>
               <form onSubmit={onAsk} className="flex gap-2" data-testid="ask-form">
                 <input
                   type="text"
@@ -211,6 +245,8 @@ const Assistant = () => {
                   {asking ? 'Thinking…' : 'Ask'}
                 </button>
               </form>
+
+              {answerError && <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">{answerError}</p>}
 
               {result && (
                 <div className="mt-6" data-testid="answer-block">
@@ -236,7 +272,7 @@ const Assistant = () => {
                             data-testid="source-item"
                           >
                             <p className="font-medium text-gray-900 dark:text-white">
-                              [{source.ref}] {source.document} · part {source.chunkIndex + 1}
+                              [{source.ref}] {displayFilename(source.document)} · part {source.chunkIndex + 1}
                               <span className="ml-2 text-gray-500">relevance {source.score}</span>
                               {source.cited && <span className="ml-2 text-green-600 dark:text-green-400">cited in answer</span>}
                             </p>
